@@ -46,7 +46,7 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 	info_ptr = png_create_info_struct(png_ptr);
 	if (info_ptr == NULL) {
 		fclose(fp);
-		png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
+		png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 		return NULL;
 	}
 
@@ -55,7 +55,7 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 	 */
 	if (setjmp(png_jmpbuf(png_ptr))) {
 		/* Free all of the memory associated with the png_ptr and info_ptr */
-		png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 		fclose(fp);
 		/* If we get here, we had a problem reading the file */
 		return NULL;
@@ -70,29 +70,31 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 	/* Read entire image. */
 	/* XXX: Assuming host is litle endian system like ps2 or x86. */
 	png_read_png(png_ptr, info_ptr,
-		PNG_TRANSFORM_SWAP_ENDIAN /* png_transforms */ , png_voidp_NULL);
+		PNG_TRANSFORM_SWAP_ENDIAN /* png_transforms */ , (png_voidp)NULL);
+
+	*width = png_get_image_width(png_ptr, info_ptr);
+	*height = png_get_image_height(png_ptr, info_ptr);
+	*depth = png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr) / 8;
 
 	/* At this point you have read the entire image */
-	printf("Width: %d Height: %d Depth: %d\n", (int) info_ptr->width,
-		(int) info_ptr->height, (int) (info_ptr->pixel_depth / 8));
+	printf("Width: %d Height: %d Depth: %d\n", *width, *height, *depth);
 
-	*width = info_ptr->width;
-	*height = info_ptr->height;
-	*depth = info_ptr->pixel_depth / 8;
-	if (info_ptr->color_type == PNG_COLOR_TYPE_RGBA) {
-		if (info_ptr->pixel_depth != 32) {
-			fprintf(stderr, "Color depth wrong %d (32 required).\n", info_ptr->pixel_depth);
+	if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
+		if ((png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr)) != 32) {
+			fprintf(stderr, "Color depth wrong %d (32 required).\n",
+			        (png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr)));
 
 			/* clean up after the read, and free any memory allocated - REQUIRED */
-			png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+			png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 			return NULL;
 		}
 	} else {
-		if (info_ptr->pixel_depth != 24) {
-			fprintf(stderr, "Color depth wrong %d (24 required).\n", info_ptr->pixel_depth);
+		if ((png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr)) != 24) {
+			fprintf(stderr, "Color depth wrong %d (24 required).\n",
+			        (png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr)));
 
 			/* clean up after the read, and free any memory allocated - REQUIRED */
-			png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+			png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 			return NULL;
 		}
 	}
@@ -100,20 +102,24 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 	/* close the file */
 	fclose(fp);
 
-	dest = malloc(info_ptr->width * info_ptr->height * *depth);
-	memset(dest, 0, info_ptr->width * info_ptr->height * *depth);
+	dest = malloc((*width) * (*height) * (*depth));
+	memset(dest, 0, (*width) * (*height) * (*depth));
+
+	/* get png row data */
+	png_bytepp row_pointers;
+        row_pointers = png_get_rows(png_ptr, info_ptr);
 
 	if (dest != NULL) {
 		/* Copy picture into destination memory and fix alpha channel. */
-		for (y = 0; y < info_ptr->height; y++) {
+		for (y = 0; y < *height; y++) {
 			unsigned char *p;
 
-			p = info_ptr->row_pointers[y];
-			for (x = 0; x < info_ptr->width; x++) {
+			p = row_pointers[y];
+			for (x = 0; x < *width; x++) {
 				unsigned char alpha;
 				int pos;
 
-				if (info_ptr->color_type == PNG_COLOR_TYPE_RGBA) {
+				if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
 					/* Value range 0 .. 255 changed to range 0 .. 128. */
 					alpha = p[3] >> 1;
 					if (alpha != 0)
@@ -123,12 +129,12 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 				}
 				alpha = 0x80 - alpha;
 
-				pos = *depth * (y * info_ptr->width + x);
+				pos = *depth * (y * (*width) + x);
 				/* XXX: Assuming host is litle endian system like ps2 or x86. */
 				dest[pos + 0] = p[0];
 				dest[pos + 1] = p[1];
 				dest[pos + 2] = p[2];
-				if (info_ptr->color_type == PNG_COLOR_TYPE_RGBA) {
+				if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
 					dest[pos + 3] = alpha;
 					p += 4;
 				} else {
@@ -139,7 +145,7 @@ uint8_t *loadPng(const char *file_name, uint16_t * width, uint16_t * height,
 	}
 
 	/* clean up after the read, and free any memory allocated - REQUIRED */
-	png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
 	/* that's it */
 	return dest;
