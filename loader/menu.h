@@ -19,13 +19,13 @@ class Menu {
 
 	int selectedMenu;
 	int numberOfMenuEntries;
-	vector<MenuEntry> menuVector;
+	std::vector<MenuEntry> menuVector;
 	int positionX;
 	int positionY;
 	const char *title;
 	/** Maximum number of menu items on one page (display). */
 	int numberOfMenuItems;
-	vector<Menu *> subMenuVector;
+	std::vector<Menu *> subMenuVector;
 
 	public:
 	Menu(GSGLOBAL *gsGlobal, GSFONTM *gsFont, int numberOfMenuItems) :
@@ -107,7 +107,7 @@ class Menu {
 	}
 
 	void deleteEntry(const char *name) {
-		vector<MenuEntry>::iterator i;
+		std::vector<MenuEntry>::iterator i;
 		for (i = menuVector.begin(); i != menuVector.end(); i++) {
 			if (strcmp(i->getName(), name) == 0) {
 				menuVector.erase(i);

@@ -7,7 +7,7 @@ EE_OBJS = $(PROGRAM).o main.o jump.o entry.o exception.o interrupts.o graphic.o 
 EE_OBJS += menu.o menuEntry.o pad.o modules.o rom.o loadermenu.o configuration.o eedebug.o
 EE_OBJS += SMS_SIF.o SMS_CDVD.o SMS_CDDA.o getrte.o getsbios.o getelf.o ps2dev9.o hdd.o
 EE_OBJS += nvram.o kprint.o crc32check.o
-EE_LIBS = -lpatches -L$(PS2DEV)/gsKit/lib -lgskit -ldmakit -L$(PS2SDK)/ports/lib -lstlport
+EE_LIBS = -lpatches -L$(PS2DEV)/gsKit/lib -lgskit -ldmakit -L$(PS2SDK)/ports/lib 
 EE_LIBS += -lmc -lfileXio -lkbd -lcdvd
 ifneq ($(LIBTIFF),)
 EE_LIBS += -L$(LIBTIFF) -ltiff
