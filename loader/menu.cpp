@@ -7,7 +7,7 @@ void Menu::paint(void)
 {
 	int y, x;
 	int z;
-	vector<MenuEntry>::iterator i;
+	std::vector<MenuEntry>::iterator i;
 	int start;
 	int c;
 
@@ -138,8 +138,8 @@ Menu *Menu::getSubMenu(const char *name)
 }
 void Menu::reset(GSGLOBAL *gsGlobal, GSFONTM *gsFont, int numberOfMenuItems)
 {
-	vector<MenuEntry>::iterator i;
-	vector<Menu *>::iterator n;
+	std::vector<MenuEntry>::iterator i;
+	std::vector<Menu *>::iterator n;
 
 	this->gsGlobal = gsGlobal;
 	this->gsFont = gsFont;

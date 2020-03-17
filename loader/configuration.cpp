@@ -98,7 +98,7 @@ class ConfigurationTextItem:ConfigurationItem {
 	}
 };
 
-vector < ConfigurationItem * >configurationVector;
+std::vector < ConfigurationItem * >configurationVector;
 
 extern "C" {
 
@@ -117,7 +117,7 @@ extern "C" {
 				val = strchr(buffer, '=');
 
 				if (val != NULL) {
-					vector < ConfigurationItem * >::iterator i;
+					std::vector < ConfigurationItem * >::iterator i;
 
 					/* remove carriage return. */
 					val[strlen(val) - 1] = 0;
@@ -259,7 +259,7 @@ extern "C" {
 		}
 		fd = fopen(configfile, "wt");
 		if (fd != NULL) {
-			vector < ConfigurationItem * >::iterator i;
+			std::vector < ConfigurationItem * >::iterator i;
 
 			for (i = configurationVector.begin();
 				i != configurationVector.end(); i++) {
